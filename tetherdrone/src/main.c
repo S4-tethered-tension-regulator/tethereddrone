@@ -1,1 +1,5 @@
-void app_main() {}
+#include "pins.h"
+
+void app_main() {
+
+}
