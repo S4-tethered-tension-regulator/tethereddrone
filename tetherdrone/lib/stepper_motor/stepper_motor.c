@@ -9,10 +9,10 @@
 volatile uint8_t current_speed = 0;
 
 void stepper_task(void *pvParameter) {
+    uint32_t step_counter = 0; // Add a counter
+    
     while(1) {
         if (current_speed > 0) {
-            // Calculate delay based on speed percentage.
-            // 100% gives a fast 500us delay. 1% gives a slower 5000us delay.
             uint32_t delay_us = 500 + ((100 - current_speed) * 45); 
 
             gpio_set_level(MOTOR_PUL_PIN, 1);
@@ -20,8 +20,15 @@ void stepper_task(void *pvParameter) {
             
             gpio_set_level(MOTOR_PUL_PIN, 0);
             esp_rom_delay_us(delay_us);
+            
+            // YIELD FIX: Give the OS 1 tick of free time every 10 steps 
+            // to reset the Watchdog timer and prevent crashes.
+            step_counter++;
+            if (step_counter >= 10) {
+                vTaskDelay(pdMS_TO_TICKS(1)); 
+                step_counter = 0;
+            }
         } else {
-            // If speed is 0 we yield to FreeRTOS so we do not waste CPU time
             vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
