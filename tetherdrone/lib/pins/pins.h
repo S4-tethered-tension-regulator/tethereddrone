@@ -1,9 +1,9 @@
 #pragma once
 
 // --- Motor Pins ---
-#define MOTOR_PUL_PIN GPIO_NUM_3 
-#define MOTOR_DIR_PIN GPIO_NUM_4
-#define MOTOR_ENA_PIN GPIO_NUM_5
+#define MOTOR_PUL_PIN GPIO_NUM_14 
+#define MOTOR_DIR_PIN GPIO_NUM_13
+#define MOTOR_ENA_PIN GPIO_NUM_12
 
 // --- Load Cell Pins ---
 #define LOAD_DT_PIN GPIO_NUM_6
