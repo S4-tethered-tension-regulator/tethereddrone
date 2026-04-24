@@ -47,14 +47,15 @@ void app_main() {
                 motor_is_spinning = false;
                 last_motor_switch = current_time; // Reset the timer
             }
-        } else {
-            // Has it been stopped for 3000ms?
-            if ((current_time - last_motor_switch) >= pdMS_TO_TICKS(3000)) {
-                stepper_motor_move(100);
-                motor_is_spinning = true;
-                last_motor_switch = current_time; // Reset the timer
+                    // In main.c
+            } else {
+                // Has it been stopped for 10000ms? (Changed from 3000 for testing)
+                if ((current_time - last_motor_switch) >= pdMS_TO_TICKS(10000)) {
+                    stepper_motor_move(100);
+                    motor_is_spinning = true;
+                    last_motor_switch = current_time; 
+                }
             }
-        }
         
         // Wait just 100 milliseconds before reading the load cell again.
         // This gives you 10 weight readings per second.
