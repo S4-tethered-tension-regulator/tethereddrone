@@ -1,3 +1,3 @@
-idf_component_register(SRCS ${app_sources}
-                       INCLUDE_DIRS "../lib"  
-                       REQUIRES load_cell)
+idf_component_register(SRCS "main.c"
+                       INCLUDE_DIRS "."
+                       REQUIRES load_cell pins)

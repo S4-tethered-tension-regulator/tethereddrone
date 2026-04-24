@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "load_cell/load_cell.h"
-#include "pins/pins.h"  // Changed to include the folder name
+#include "load_cell.h"  // Removed folder prefix
+#include "pins.h"       // Removed folder prefix
 
 void app_main() {
     printf("Initializing Load Cell...\n");
