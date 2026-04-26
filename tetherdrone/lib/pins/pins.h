@@ -11,3 +11,7 @@
 
 // --- Hall Effect Pins (Analog) ---
 #define HALL_A0_PIN GPIO_NUM_8
+
+// --- lcd screen pins ---
+#define LCD_SDA_PIN GPIO_NUM_11
+#define LCD_SCL_PIN GPIO_NUM_10
