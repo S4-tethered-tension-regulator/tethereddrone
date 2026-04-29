@@ -10,7 +10,7 @@
 #define LOAD_SCK_PIN GPIO_NUM_7
 
 // --- Hall Effect Pins (Analog) ---
-#define HALL_A0_PIN GPIO_NUM_8
+#define HALL_A0_PIN GPIO_NUM_4
 
 // --- lcd screen pins ---
 #define LCD_SDA_PIN GPIO_NUM_11
