@@ -15,3 +15,9 @@
 // --- lcd screen pins ---
 #define LCD_SDA_PIN GPIO_NUM_11
 #define LCD_SCL_PIN GPIO_NUM_10
+
+// --- button pins ---
+#define BUTTON_UP GPIO_NUM_19
+#define BUTTON_DOWN GPIO_NUM_20
+
+
