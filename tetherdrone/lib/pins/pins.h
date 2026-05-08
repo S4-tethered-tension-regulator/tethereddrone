@@ -19,5 +19,3 @@
 // --- button pins ---
 #define BUTTON_UP GPIO_NUM_19
 #define BUTTON_DOWN GPIO_NUM_20
-
-

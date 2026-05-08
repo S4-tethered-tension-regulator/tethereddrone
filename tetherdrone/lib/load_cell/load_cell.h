@@ -1,18 +1,7 @@
-#pragma once
+#ifndef LOAD_CELL_H
+#define LOAD_CELL_H
 
-#include <stdint.h>
-#include "driver/gpio.h"
+void load_cell_init(void);
+long load_cell_read(void);
 
-typedef struct {
-    gpio_num_t dout;
-    gpio_num_t pd_sck;
-    long offset;
-    float scale;
-} load_cell_t;
-
-void load_cell_init(load_cell_t *dev, gpio_num_t dout, gpio_num_t pd_sck);
-long load_cell_read(load_cell_t *dev);
-long load_cell_read_average(load_cell_t *dev, int times);
-void load_cell_tare(load_cell_t *dev, int times);
-void load_cell_set_scale(load_cell_t *dev, float scale);
-float load_cell_get_units(load_cell_t *dev, int times);
+#endif // LOAD_CELL_H
