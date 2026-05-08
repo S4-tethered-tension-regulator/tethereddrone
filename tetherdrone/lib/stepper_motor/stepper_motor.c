@@ -60,3 +60,7 @@ void stepper_motor_move(int8_t speed_percent) {
 void stepper_motor_stop(void) {
     current_speed = 0;
 }
+
+int8_t stepper_motor_get_speed(void) {
+    return current_speed;
+}
