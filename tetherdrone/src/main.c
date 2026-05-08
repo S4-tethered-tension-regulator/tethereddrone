@@ -12,16 +12,12 @@ long load_cell_max;
 long load_cell_min;
 long load_cell_our_zero; //this one tell us when I pick up the thing how much force I need to apply
 int hall_effect_zero;
-int tether_length_currently; //in mm
+int tether_length_currently = 0; //in mm
 int tether_length_max = 1500; //mm 
-int activation_wiggle_room = 0.07; // aka 7% - see adas simulation
 uint32_t last_lcd_update = 0;
 const uint32_t LCD_UPDATE_INTERVAL = 250;
-uint32_t current_time = millis();
-
 
 void app_main() {
- 
     
     // Start, I want here that all the porgramms are init and the calibartion of the tether should be given.
 
@@ -96,14 +92,18 @@ void app_main() {
     lcd_send_string("Start Max Tension");
     lcd_set_cursor(0,2);
     lcd_send_string("Starting Motor");
-    while(button_read_up() == 1)
+    while(button_read_up() == 1) //button not triggered
     {
        stepper_motor_move(-90);
+       vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
     if(button_read_up() == 0){
         load_cell_max = load_cell_read();
         stepper_motor_stop();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
     lcd_set_cursor(0,3);
     lcd_send_string("Max Tension Found");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -121,10 +121,12 @@ void app_main() {
     while(button_read_down() == 1)
     {
         stepper_motor_move(90);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     if(button_read_down() == 0){
         load_cell_min = load_cell_read();
         stepper_motor_stop();
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     lcd_set_cursor(0,3);
     lcd_send_string("Min Tension Found");
@@ -167,11 +169,19 @@ void app_main() {
 
     
     //okay now I hav the 2 values and I need to make the tether centered
-    load_cell_our_zero = load_cell_max / 2;
+    load_cell_our_zero = load_cell_max / 2; // changes this here
     stepper_motor_move(-90);
-    if(load_cell_read() == load_cell_our_zero){
-        stepper_motor_stop();
+
+    // Wait until the tension drops to our target zero
+    while(load_cell_read() > load_cell_our_zero) {
+        vTaskDelay(10 / portTICK_PERIOD_MS); 
     } 
+    stepper_motor_stop();
+
+    // Calculate the 7% threshold using integer math (no decimals!) - aka activation_wiggle_room
+    long wiggle_amount = (load_cell_our_zero * 7) / 100;
+    long upper_tension_threshold = load_cell_our_zero + wiggle_amount;
+    long lower_tension_threshold = load_cell_our_zero - wiggle_amount;
 
     //Calibration Complete
     for(char i = 0; i < 2; i++){
@@ -199,10 +209,15 @@ void app_main() {
    // - I also need to soften the blow so that the drone if it coming down it not janked out of the air -> okay new testing showed me 
    // that the motor moves very slow anyway so I think there is no reason to make this
 
-   while(1)
-   {
-       if (current_time - last_lcd_update >= LCD_UPDATE_INTERVAL) { ////just a protection thingy so the lcd screen doesnt update so many times and flickering
+  
+
+    while(1)
+    {
+    uint32_t current_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
+
+    if (current_time - last_lcd_update >= LCD_UPDATE_INTERVAL) {
         last_lcd_update = current_time; 
+      
         // display what the motor does atm
         lcd_set_cursor(0,0);
         int8_t current_speed = stepper_motor_get_speed(); // read speedy
@@ -225,13 +240,19 @@ void app_main() {
         
 
         //now I want the motor to actually do something so here comes the logic of the motor 
-        if(load_cell_read() > load_cell_our_zero + (load_cell_our_zero * activation_wiggle_room)){ //if the tension is big you give tether
+        // Read the sensor exactly ONE time per loop
+        long current_tension = load_cell_read(); 
+
+        // Use the pre-calculated integer limits
+        if(current_tension > upper_tension_threshold){ //if the tension is big you give tether
             stepper_motor_move(-90);
-        } else if(load_cell_read() < load_cell_our_zero - (load_cell_our_zero * activation_wiggle_room)){
+        } else if(current_tension < lower_tension_threshold){
             stepper_motor_move(90);
         } else{ //if the tension is close to our calibrated zero
             stepper_motor_stop();
         }
-
+        
+        // small delay so the programm is not overwehlmed
+        vTaskDelay(10 / portTICK_PERIOD_MS);
    }
-}
+}   
