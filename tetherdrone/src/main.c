@@ -37,6 +37,7 @@ void app_main() {
 
     lcd_set_cursor(0,2);
     lcd_send_string("Init Load");
+    // Barebones init requires no arguments
     load_cell_init();
     lcd_set_cursor(0,2);
     lcd_send_string("Init Load   - Passed");
@@ -97,11 +98,13 @@ void app_main() {
        stepper_motor_move(-90);
        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-
     if(button_read_up() == 0){
-        load_cell_max = load_cell_read();
+        // Stop the motor first and give it time to settle
         stepper_motor_stop();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+        
+        // This returns a 'long' number that you can save using the barebones function
+        load_cell_max = load_cell_read_average(10);
     }
 
     lcd_set_cursor(0,3);
@@ -124,10 +127,13 @@ void app_main() {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     if(button_read_down() == 0){
-        load_cell_min = load_cell_read();
+        // Stop the motor first and give it time to settle
         stepper_motor_stop();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+        
+        load_cell_min = load_cell_read_average(10);
     }
+        
     lcd_set_cursor(0,3);
     lcd_send_string("Min Tension Found");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -167,7 +173,6 @@ void app_main() {
     snprintf(display_buffer, sizeof(display_buffer), "%ld", load_cell_min);
     lcd_send_string(display_buffer);
 
-    
     //okay now I hav the 2 values and I need to make the tether centered
     load_cell_our_zero = load_cell_max / 2; // changes this here
     stepper_motor_move(-90);
@@ -238,7 +243,6 @@ void app_main() {
 
        }
         
-
         //now I want the motor to actually do something so here comes the logic of the motor 
         // Read the sensor exactly ONE time per loop
         long current_tension = load_cell_read(); 
@@ -255,4 +259,6 @@ void app_main() {
         // small delay so the programm is not overwehlmed
         vTaskDelay(10 / portTICK_PERIOD_MS);
    }
-}   
+
+
+}
