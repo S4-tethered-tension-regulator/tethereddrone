@@ -32,7 +32,11 @@ void stepper_task(void *pvParameter) {
             
             step_counter++;
             if (step_counter >= 10) {
-                vTaskDelay(pdMS_TO_TICKS(1)); 
+                // --- THE CRITICAL FIX ---
+                // pdMS_TO_TICKS(1) evaluates to 0 on standard ESP32 configs.
+                // We must force at least 1 physical tick (vTaskDelay(1)) so the Watchdog 
+                // doesn't crash and app_main gets CPU time to call stepper_motor_stop()!
+                vTaskDelay(1); 
                 step_counter = 0;
             }
         } else {
@@ -40,6 +44,7 @@ void stepper_task(void *pvParameter) {
         }
     }
 }
+
 void stepper_motor_init(void) {
     gpio_reset_pin(MOTOR_DIR_PIN);
     gpio_set_direction(MOTOR_DIR_PIN, GPIO_MODE_OUTPUT);
@@ -49,11 +54,14 @@ void stepper_motor_init(void) {
     gpio_set_direction(MOTOR_ENA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(MOTOR_ENA_PIN, 0);
     gpio_set_level(MOTOR_DIR_PIN, 1);
+    
+    // Created at priority 5 (Higher than main loop)
     xTaskCreate(stepper_task, "stepper_task", 2048, NULL, 5, NULL);
 }
 
 void stepper_motor_move(int8_t speed_percent) {
     if (speed_percent > 100) speed_percent = 100;
+    if (speed_percent < -100) speed_percent = -100;
     current_speed = speed_percent;
 }
 

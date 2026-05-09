@@ -6,11 +6,11 @@
 #define MOTOR_ENA_PIN GPIO_NUM_12
 
 // --- Load Cell Pins ---
-#define LOAD_DT_PIN GPIO_NUM_6
-#define LOAD_SCK_PIN GPIO_NUM_7
+#define LOAD_DT_PIN GPIO_NUM_2
+#define LOAD_SCK_PIN GPIO_NUM_1
 
 // --- Hall Effect Pins (Analog) ---
-#define HALL_A0_PIN GPIO_NUM_4
+#define HALL_SENSOR_PIN GPIO_NUM_42
 
 // --- lcd screen pins ---
 #define LCD_SDA_PIN GPIO_NUM_11
