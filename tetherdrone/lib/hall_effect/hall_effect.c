@@ -15,16 +15,19 @@ const int SPOOL_CIRCUMFERENCE_MM = 188;
 static void IRAM_ATTR hall_isr_handler(void* arg) {
     int64_t current_time = esp_timer_get_time(); // Time in microseconds
     
-    // DEBOUNCE: Ignore bouncing signals that happen within 50ms of each other
-    if (current_time - last_pulse_time > 50000) {
+    // DEBOUNCE: Ignore pulses within 2 seconds of the last one.
+    if (current_time - last_pulse_time > 2000000) {
         
-        // Ask the motor which way we are spinning to know if we are giving or taking slack
+        // Ask the motor which way we are spinning to know if we are giving or taking slack.
+        // Sign convention (matches main.c):
+        //   negative speed = unwinding / giving slack (Forwards)
+        //   positive speed = winding / pulling tight (Backwards)
         int8_t speed = stepper_motor_get_speed();
         
-        if (speed > 0) { 
+        if (speed < 0) { 
             // Unwinding (Giving slack)
             current_tether_length_mm += SPOOL_CIRCUMFERENCE_MM;
-        } else if (speed < 0) { 
+        } else if (speed > 0) { 
             // Winding (Pulling tight)
             current_tether_length_mm -= SPOOL_CIRCUMFERENCE_MM;
         }
