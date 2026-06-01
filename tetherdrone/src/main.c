@@ -13,7 +13,7 @@ long load_cell_max; //this is the maximum the load cell can measure in our syste
 long load_cell_min; //this is the minimum the load cell can measure in our system
 long load_cell_our_zero; //this one tell us when I pick up the thing how much force I need to apply
 int hall_effect_zero; //
-int tether_length_max = 1500; //mm (its the amount of tether we can give out) 
+int tether_length_max = 1000; //mm (its the amount of tether we can give out) 
 uint32_t last_lcd_update = 0; //
 const uint32_t LCD_UPDATE_INTERVAL = 250;
 volatile long current_tension_global = 0; //measrue the current tension sensor
@@ -167,8 +167,7 @@ void app_main() {
 
     
     // now we want to center the entire thing so it has enough tension
-
-    load_cell_our_zero = (load_cell_max + load_cell_min) / 2; //this find the middle between min and max
+    load_cell_our_zero = load_cell_min + ((load_cell_max - load_cell_min) * 29) / 100; //this finds the 29%
     
     lcd_clear();
     lcd_set_cursor(0,0);
@@ -223,9 +222,9 @@ void app_main() {
     xTaskCreate(load_cell_task, "LoadCellTask", 2048, NULL, 5, NULL);
 
     // calculate the trigger amounts on the Simulation data
-    long wiggle_amount = (load_cell_our_zero * 7) / 100; //it has a +-7% wiggle room where it in idle meaning it should just hover but through wind it might be that its goes a slight bit left and right. The 7% come from our simulation
-    long upper_tension_threshold = load_cell_our_zero + wiggle_amount; //so this calc then when its higher than +7% (from load_cell_our_zero) to know when it should give tether
-    long lower_tension_threshold = load_cell_our_zero - wiggle_amount; // so this calc then when its lower than -7% (from load_cell_our_zero) to know whneit should take tether
+    long wiggle_amount = (load_cell_our_zero * 10) / 100; //it has a +-10% wiggle room where it in idle meaning it should just hover but through wind it might be that its goes a slight bit left and right. The 10% come from our simulation
+    long upper_tension_threshold = load_cell_our_zero + wiggle_amount; //so this calc then when its higher than +10% (from load_cell_our_zero) to know when it should give tether
+    long lower_tension_threshold = load_cell_our_zero - wiggle_amount; // so this calc then when its lower than -10% (from load_cell_our_zero) to know whneit should take tether
 
     for(char i = 0; i < 2; i++){
         lcd_set_cursor(0,0);
@@ -245,9 +244,9 @@ void app_main() {
     // now we can finally start to fly since setup is all done. my logic here is to adjust the tether based on percentage.
     // the hall effect sensor will keep track of how much tether is given or taken.
     // we basically have 3 states:
-    // - forwards: if the tension goes over the 7% threshold this triggers.
-    // - still: if the value is within the 7% median sweet spot it just remains still.
-    // - backwards: if the tension drops below the 7% threshold this triggers to reel it in.
+    // - forwards: if the tension goes over the 10% threshold this triggers.
+    // - still: if the value is within the 10% median sweet spot it just remains still.
+    // - backwards: if the tension drops below the 10% threshold this triggers to reel it in.
     // originally I wanted to soften the movements so the drone doesn't get yanked out of the air if it comes down fast.
     // but new testing showed me the motor is pretty slow anyway so there is no reason to add that extra code.
 
@@ -296,7 +295,7 @@ void app_main() {
         stepper_motor_move(100);
     }
 } else { 
-    // Tension is within the +-7% threshold (Idle)
+    // Tension is within the +-10% threshold (Idle)
     stepper_motor_stop();
 }
 

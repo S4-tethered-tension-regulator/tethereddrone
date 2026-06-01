@@ -13,4 +13,4 @@ bool button_read_up(void);
 // Returns true if the DOWN button is currently pressed
 bool button_read_down(void);
 
-#endif // BUTTON_H
+#endif

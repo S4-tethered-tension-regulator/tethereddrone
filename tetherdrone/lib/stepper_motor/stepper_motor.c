@@ -22,7 +22,7 @@ void stepper_task(void *pvParameter) {
             } else {
                 gpio_set_level(MOTOR_DIR_PIN, 0);
             }
-            esp_rom_delay_us(10);  // <-- give driver time to register direction change
+            esp_rom_delay_us(10);  
 
             uint32_t delay_us = 500 + ((100 - abs(current_speed)) * 45);
             gpio_set_level(MOTOR_PUL_PIN, 1);
@@ -32,10 +32,6 @@ void stepper_task(void *pvParameter) {
             
             step_counter++;
             if (step_counter >= 10) {
-                // --- THE CRITICAL FIX ---
-                // pdMS_TO_TICKS(1) evaluates to 0 on standard ESP32 configs.
-                // We must force at least 1 physical tick (vTaskDelay(1)) so the Watchdog 
-                // doesn't crash and app_main gets CPU time to call stepper_motor_stop()!
                 vTaskDelay(1); 
                 step_counter = 0;
             }
@@ -55,7 +51,7 @@ void stepper_motor_init(void) {
     gpio_set_level(MOTOR_ENA_PIN, 0);
     gpio_set_level(MOTOR_DIR_PIN, 1);
     
-    // Created at priority 5 (Higher than main loop)
+    // prio 5
     xTaskCreate(stepper_task, "stepper_task", 2048, NULL, 5, NULL);
 }
 

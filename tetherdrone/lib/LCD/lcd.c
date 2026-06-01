@@ -3,9 +3,9 @@
 #include "pins.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_rom_sys.h" // Added for precise microsecond delays
+#include "esp_rom_sys.h"
 
-// If it still doesn't work after checking contrast, change this to 0x3F
+
 #define LCD_ADDR 0x27 
 #define I2C_PORT I2C_NUM_0
 
@@ -58,7 +58,6 @@ void lcd_init(void) {
 
     vTaskDelay(pdMS_TO_TICKS(50)); // Wait for LCD to fully power up
 
-    // Fixed initialization sequence using precise microsecond delays
     lcd_send_cmd(0x30); esp_rom_delay_us(5000);
     lcd_send_cmd(0x30); esp_rom_delay_us(1000);
     lcd_send_cmd(0x30); esp_rom_delay_us(1000);

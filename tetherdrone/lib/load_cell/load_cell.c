@@ -5,56 +5,52 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-long load_cell_offset = 0;
-
-// Initialize the FreeRTOS spinlock to protect our timing
+// for the timing
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
 void load_cell_init(void) {
-    // Setup Data Pin as Input
     gpio_reset_pin(LOAD_DT_PIN);
     gpio_set_direction(LOAD_DT_PIN, GPIO_MODE_INPUT);
 
-    // Setup Clock Pin as Output
+    // clock pin is output
     gpio_reset_pin(LOAD_SCK_PIN);
     gpio_set_direction(LOAD_SCK_PIN, GPIO_MODE_OUTPUT);
     
-    // Send a reset pulse on startup to ensure a clean state
+    // reset
     gpio_set_level(LOAD_SCK_PIN, 1);
     ets_delay_us(100);
     gpio_set_level(LOAD_SCK_PIN, 0);
 }
 
 long load_cell_read(void) {
-    // Grab the current hardware time
+    // get the time
     TickType_t start_tick = xTaskGetTickCount();
     
-    // Set a strict real-world timeout of 500 milliseconds
+    // wait max 500ms or it will get stuck
     TickType_t timeout_ticks = pdMS_TO_TICKS(500); 
 
-    // Wait until the data pin goes LOW
+    // wait until it drops to 0
     while (gpio_get_level(LOAD_DT_PIN) == 1) {
         
-        // Check if 500ms has physically passed
+        // if it takes too long the sensor probably crashed from the motor noise
         if ((xTaskGetTickCount() - start_tick) > timeout_ticks) {
-            // The sensor crashed from motor noise. Force a hardware reset!
+            // force a reset
             gpio_set_level(LOAD_SCK_PIN, 1);
             ets_delay_us(100);
             gpio_set_level(LOAD_SCK_PIN, 0);
-            return 0; // Return 0 instantly to keep the main loop moving
+            return 0; // return 0 so the main loop keeps going
         }
         
-        // Tiny yield to prevent watchdog crash
+        // small delay to stop watchdog crashes
         vTaskDelay(1); 
     }
 
     long count = 0;
     
-    // --- ENTER CRITICAL SECTION ---
-    // The ESP32 is now forbidden from pausing our code. Perfect timing guaranteed.
+    // stop the esp from doing other stuff so timing is perfect
     portENTER_CRITICAL(&mux);
     
-    // Read 24 bits directly
+    // read the 24 bits
     for (int i = 0; i < 24; i++) {
         gpio_set_level(LOAD_SCK_PIN, 1);
         ets_delay_us(2); 
@@ -67,17 +63,15 @@ long load_cell_read(void) {
         }
     }
 
-    // Send the 25th pulse for standard 128 Gain
     gpio_set_level(LOAD_SCK_PIN, 1);
     ets_delay_us(2);
     gpio_set_level(LOAD_SCK_PIN, 0);
     ets_delay_us(2);
 
-    // --- EXIT CRITICAL SECTION ---
-    // The ESP32 is allowed to resume background tasks now.
+    // let the esp do its normal stuff again
     portEXIT_CRITICAL(&mux);
 
-    // Convert to a signed 32-bit integer
+    // make it a 32 bit int
     if (count & 0x800000) {
         count |= 0xFF000000;
     }
@@ -91,8 +85,4 @@ long load_cell_read_average(int times) {
         sum += load_cell_read();
     }
     return sum / times;
-}
-
-void load_cell_tare(int times) {
-    load_cell_offset = load_cell_read_average(times);
 }
